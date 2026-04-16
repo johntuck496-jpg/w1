@@ -1,0 +1,83 @@
+# ============================================
+# HTTPS FORCE REDIRECT
+# ============================================
+RewriteEngine On
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+
+# ============================================
+# SECURITY HEADERS
+# ============================================
+
+# 1. Content-Security-Policy (CSP)
+# Sirf apni site ke resources allow karo
+# Agar Google Fonts, Bootstrap CDN etc use karte ho toh unhe yahan add karo
+Header always set Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self';"
+
+# 2. HSTS - Browser ko force karo sirf HTTPS use kare (1 saal)
+Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+
+# 3. MIME sniffing band karo
+Header always set X-Content-Type-Options "nosniff"
+
+# 4. Clickjacking se bachao - iframe mein load hona band
+Header always set X-Frame-Options "DENY"
+
+# 5. Browser ka XSS filter ON karo
+Header always set X-XSS-Protection "1; mode=block"
+
+# 6. Referrer info control karo
+Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+# 7. Camera, mic, location etc band karo
+Header always set Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()"
+
+# 8. Flash/PDF cross-domain access band karo
+Header always set X-Permitted-Cross-Domain-Policies "none"
+
+# 9. Cross-Origin policies
+Header always set Cross-Origin-Opener-Policy "same-origin"
+Header always set Cross-Origin-Resource-Policy "same-origin"
+
+# ============================================
+# SENSITIVE FILES BLOCK KARO
+# ============================================
+
+# .htaccess, .env, .git etc koi access na kar sake
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# Backup files block karo
+<FilesMatch "\.(bak|config|sql|log|ini|sh)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# ============================================
+# DIRECTORY LISTING BAND KARO
+# ============================================
+Options -Indexes
+
+# ============================================
+# CACHING (Performance + Security)
+# ============================================
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/html "access plus 1 hour"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 month"
+    ExpiresByType image/jpeg "access plus 1 month"
+    ExpiresByType image/svg+xml "access plus 1 month"
+    ExpiresByType image/webp "access plus 1 month"
+    ExpiresByType font/woff2 "access plus 1 year"
+</IfModule>
+
+# ============================================
+# SERVER INFO HIDE KARO
+# ============================================
+ServerSignature Off
+Header unset X-Powered-By
+Header unset Server
